@@ -1,7 +1,7 @@
 # 🎮 GPU Price-to-Performance Dashboard
 
 > Interactive 4K gaming GPU comparison — NVIDIA RTX 5000 vs AMD RX 9000/7000 series  
-> **Live site → [your-project.vercel.app](https://your-project.vercel.app)**
+> **Live site → [your-project.vercel.app]([https://your-project.vercel.app](https://gpu-price-performance-4-k.vercel.app/))**
 
 ![GPU Comparison Dashboard](https://img.shields.io/badge/Status-Live-76b900?style=flat-square) ![Static](https://img.shields.io/badge/Type-Static%20HTML-blue?style=flat-square) ![Vercel](https://img.shields.io/badge/Deployed%20on-Vercel-black?style=flat-square&logo=vercel)
 
