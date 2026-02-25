@@ -1,0 +1,597 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GPU Price-to-Performance: 4K Gaming 2026</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@400;500&family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --surface: #111118;
+    --surface2: #18181f;
+    --border: #2a2a38;
+    --nvidia: #76b900;
+    --nvidia-dim: #3a5c00;
+    --amd: #ed1c24;
+    --amd-dim: #6e0d11;
+    --gold: #f5c842;
+    --text: #e8e8f0;
+    --text-dim: #7a7a90;
+    --text-muted: #44445a;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Instrument Sans', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Grid noise texture */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      repeating-linear-gradient(0deg, transparent, transparent 39px, rgba(255,255,255,0.015) 39px, rgba(255,255,255,0.015) 40px),
+      repeating-linear-gradient(90deg, transparent, transparent 39px, rgba(255,255,255,0.015) 39px, rgba(255,255,255,0.015) 40px);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .container {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 40px 20px 80px;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* ── HEADER ── */
+  header {
+    text-align: center;
+    margin-bottom: 56px;
+  }
+  .eyebrow {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    margin-bottom: 12px;
+  }
+  h1 {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(42px, 8vw, 80px);
+    letter-spacing: 0.04em;
+    line-height: 0.9;
+    background: linear-gradient(135deg, #fff 0%, #9090b0 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin-bottom: 16px;
+  }
+  .subtitle {
+    font-size: 14px;
+    color: var(--text-dim);
+    max-width: 560px;
+    margin: 0 auto;
+    line-height: 1.6;
+  }
+  .badge-row {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    margin-top: 20px;
+    flex-wrap: wrap;
+  }
+  .badge {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    padding: 4px 10px;
+    border-radius: 2px;
+    border: 1px solid;
+  }
+  .badge.nvidia { border-color: var(--nvidia); color: var(--nvidia); background: rgba(118,185,0,0.08); }
+  .badge.amd { border-color: var(--amd); color: var(--amd); background: rgba(237,28,36,0.08); }
+  .badge.warn { border-color: var(--gold); color: var(--gold); background: rgba(245,200,66,0.08); }
+
+  /* ── SECTION TITLE ── */
+  .section-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 28px;
+    letter-spacing: 0.06em;
+    color: var(--text-dim);
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+  .section-title::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  /* ── ALERT BOX ── */
+  .alert {
+    background: rgba(245,200,66,0.06);
+    border: 1px solid rgba(245,200,66,0.3);
+    border-left: 3px solid var(--gold);
+    padding: 14px 18px;
+    border-radius: 4px;
+    font-size: 13px;
+    color: #c8c080;
+    margin-bottom: 48px;
+    line-height: 1.6;
+  }
+  .alert strong { color: var(--gold); }
+
+  /* ── PERFORMANCE BAR CHART ── */
+  .chart-section {
+    margin-bottom: 56px;
+  }
+  .bar-chart {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .bar-row {
+    display: grid;
+    grid-template-columns: 180px 1fr 90px 100px;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 14px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    transition: border-color 0.2s, background 0.2s;
+    animation: fadeSlide 0.4s ease both;
+  }
+  .bar-row:hover {
+    background: var(--surface2);
+    border-color: rgba(255,255,255,0.12);
+  }
+  .bar-row.best-value {
+    border-color: rgba(245,200,66,0.5);
+    background: rgba(245,200,66,0.04);
+  }
+  .bar-row.best-value:hover {
+    background: rgba(245,200,66,0.07);
+  }
+
+  .gpu-name {
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    font-weight: 500;
+  }
+  .gpu-name .brand { font-size: 9px; letter-spacing: 0.1em; display: block; margin-bottom: 2px; }
+  .brand.nv { color: var(--nvidia); }
+  .brand.am { color: var(--amd); }
+
+  .bar-track {
+    background: rgba(255,255,255,0.04);
+    border-radius: 2px;
+    height: 20px;
+    position: relative;
+    overflow: hidden;
+  }
+  .bar-fill {
+    height: 100%;
+    border-radius: 2px;
+    position: relative;
+    transition: width 1s cubic-bezier(0.16,1,0.3,1);
+    display: flex;
+    align-items: center;
+    padding-left: 8px;
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    white-space: nowrap;
+  }
+  .bar-fill.nv { background: linear-gradient(90deg, var(--nvidia-dim), var(--nvidia)); color: #1a2e00; }
+  .bar-fill.am { background: linear-gradient(90deg, var(--amd-dim), var(--amd)); color: #fff; }
+
+  .bar-price {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--text-dim);
+    text-align: right;
+  }
+  .bar-ppd {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    text-align: right;
+  }
+
+  .star { color: var(--gold); margin-left: 4px; }
+
+  .chart-header {
+    display: grid;
+    grid-template-columns: 180px 1fr 90px 100px;
+    gap: 12px;
+    padding: 0 14px 8px;
+    margin-bottom: 4px;
+  }
+  .ch-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+  }
+  .ch-label:nth-child(2) { padding-left: 4px; }
+  .ch-label:nth-child(3), .ch-label:nth-child(4) { text-align: right; }
+
+  /* ── VALUE RANKING ── */
+  .ranking-section { margin-bottom: 56px; }
+  .ranking-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 12px;
+  }
+  .rank-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 16px;
+    position: relative;
+    overflow: hidden;
+    transition: transform 0.2s, border-color 0.2s;
+    animation: fadeSlide 0.4s ease both;
+  }
+  .rank-card:hover { transform: translateY(-2px); border-color: rgba(255,255,255,0.15); }
+  .rank-card.gold-rank { border-color: rgba(245,200,66,0.6); }
+  .rank-card.silver-rank { border-color: rgba(180,180,200,0.4); }
+  .rank-card.bronze-rank { border-color: rgba(180,120,60,0.4); }
+
+  .rank-number {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 52px;
+    line-height: 1;
+    position: absolute;
+    top: 8px;
+    right: 14px;
+    opacity: 0.08;
+  }
+  .rank-badge {
+    font-family: 'DM Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 0.1em;
+    padding: 2px 7px;
+    border-radius: 2px;
+    margin-bottom: 10px;
+    display: inline-block;
+  }
+  .rank-badge.nv { background: rgba(118,185,0,0.15); color: var(--nvidia); border: 1px solid var(--nvidia-dim); }
+  .rank-badge.am { background: rgba(237,28,36,0.15); color: var(--amd); border: 1px solid var(--amd-dim); }
+
+  .rank-model {
+    font-family: 'DM Mono', monospace;
+    font-size: 13px;
+    font-weight: 500;
+    margin-bottom: 8px;
+    line-height: 1.3;
+  }
+  .rank-score {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 22px;
+    letter-spacing: 0.04em;
+    margin-bottom: 2px;
+  }
+  .rank-score-label {
+    font-size: 10px;
+    color: var(--text-muted);
+    margin-bottom: 8px;
+    font-family: 'DM Mono', monospace;
+  }
+  .rank-tag {
+    font-size: 11px;
+    color: var(--text-dim);
+    padding: 4px 8px;
+    background: rgba(255,255,255,0.04);
+    border-radius: 3px;
+    display: inline-block;
+  }
+  .rank-caveat {
+    font-size: 10px;
+    color: #666680;
+    margin-top: 6px;
+    font-style: italic;
+  }
+
+  /* ── BUDGET GUIDE ── */
+  .budget-section { margin-bottom: 56px; }
+  .budget-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+  }
+  .budget-row {
+    display: grid;
+    grid-template-columns: 160px 220px 1fr;
+    gap: 16px;
+    align-items: center;
+    padding: 14px 18px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    animation: fadeSlide 0.4s ease both;
+  }
+  .budget-range {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 20px;
+    letter-spacing: 0.04em;
+    color: var(--text-dim);
+  }
+  .budget-pick {
+    font-family: 'DM Mono', monospace;
+    font-size: 13px;
+    font-weight: 500;
+  }
+  .budget-pick .pick-brand { font-size: 10px; letter-spacing: 0.08em; margin-bottom: 2px; display: block; }
+  .budget-desc {
+    font-size: 13px;
+    color: var(--text-dim);
+    line-height: 1.5;
+  }
+  .budget-row:hover { background: var(--surface2); }
+
+  /* ── LEGEND ── */
+  .legend {
+    display: flex;
+    gap: 24px;
+    flex-wrap: wrap;
+    margin-bottom: 28px;
+    padding: 12px 16px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+  }
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    color: var(--text-dim);
+    font-family: 'DM Mono', monospace;
+  }
+  .legend-dot {
+    width: 10px; height: 10px; border-radius: 2px;
+  }
+
+  /* ── TOOLTIP/NOTE ── */
+  .note-bar {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-left: 3px solid #4444aa;
+    padding: 10px 16px;
+    font-size: 12px;
+    color: var(--text-dim);
+    margin-bottom: 32px;
+    border-radius: 0 4px 4px 0;
+    line-height: 1.6;
+  }
+
+  @keyframes fadeSlide {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .divider {
+    height: 1px;
+    background: var(--border);
+    margin: 48px 0;
+  }
+
+  /* Mobile */
+  @media (max-width: 640px) {
+    .bar-row, .chart-header {
+      grid-template-columns: 130px 1fr 70px;
+    }
+    .bar-ppd, .ch-label:last-child { display: none; }
+    .budget-row { grid-template-columns: 1fr; gap: 6px; }
+    .budget-desc { display: none; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <!-- HEADER -->
+  <header>
+    <div class="eyebrow">February 2026 · Current Retail Prices</div>
+    <h1>GPU 4K<br>Price/Perf</h1>
+    <p class="subtitle">Real-world price-to-performance comparison for modern 4K gaming GPUs. Scores are relative (RX 9070 XT = 100 baseline), native rasterization, no upscaling.</p>
+    <div class="badge-row">
+      <span class="badge nvidia">NVIDIA RTX 5000</span>
+      <span class="badge amd">AMD RX 9000 / 7000</span>
+      <span class="badge warn">⚠ Retail prices heavily inflated vs MSRP</span>
+    </div>
+  </header>
+
+  <div class="alert">
+    <strong>Market Warning:</strong> A GDDR7 memory shortage + U.S. tariffs have pushed retail prices <strong>30–100%+ above MSRP</strong> for most cards. All prices below reflect current street prices, not launch MSRPs. The RTX 5090, for example, launched at $1,999 MSRP but retails for $3,500–$4,200 today.
+  </div>
+
+  <!-- BAR CHART -->
+  <div class="chart-section">
+    <div class="section-title">4K Performance vs Price</div>
+
+    <div class="legend">
+      <div class="legend-item"><div class="legend-dot" style="background:var(--nvidia)"></div>NVIDIA RTX 5000</div>
+      <div class="legend-item"><div class="legend-dot" style="background:var(--amd)"></div>AMD RX 9000 (current-gen)</div>
+      <div class="legend-item"><div class="legend-dot" style="background:var(--amd-dim)"></div>AMD RX 7000 (prev-gen)</div>
+      <div class="legend-item"><div class="legend-dot" style="background:var(--gold)"></div>⭐ Best value pick</div>
+    </div>
+
+    <div class="note-bar">
+      Performance score: relative 4K rasterization benchmark, <strong>RX 9070 XT = 100</strong>. Perf/$ = score ÷ midpoint retail price × 1000.
+    </div>
+
+    <div class="chart-header">
+      <div class="ch-label">GPU Model</div>
+      <div class="ch-label">4K Performance Score →</div>
+      <div class="ch-label">Price (USD)</div>
+      <div class="ch-label">Perf / $1k</div>
+    </div>
+
+    <div class="bar-chart" id="barChart"></div>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- VALUE RANKING -->
+  <div class="ranking-section">
+    <div class="section-title">Best Value Rankings</div>
+    <p style="font-size:13px;color:var(--text-dim);margin-bottom:20px;">Ranked by performance-per-dollar for <em>4K gaming specifically</em>. Cards below ~60 score struggle at 4K natively.</p>
+    <div class="ranking-grid" id="rankingGrid"></div>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- BUDGET GUIDE -->
+  <div class="budget-section">
+    <div class="section-title">Budget Guide</div>
+    <div class="budget-grid">
+      <div class="budget-row" style="animation-delay:0s">
+        <div class="budget-range">$200–$350</div>
+        <div class="budget-pick"><span class="pick-brand am">AMD</span>RX 7600 / RX 7700 XT</div>
+        <div class="budget-desc">1080p–1440p cards only. Don't expect smooth 4K — these will struggle with native 4K in demanding titles.</div>
+      </div>
+      <div class="budget-row" style="animation-delay:0.05s">
+        <div class="budget-range">$350–$500</div>
+        <div class="budget-pick"><span class="pick-brand nv">NVIDIA</span>RTX 5060 Ti 8GB / 16GB</div>
+        <div class="budget-desc">Strong 1440p, limited 4K due to VRAM ceiling (8GB) or raw compute. Use DLSS 4 to reach playable 4K in lighter titles.</div>
+      </div>
+      <div class="budget-row" style="border-color:rgba(245,200,66,0.5); background:rgba(245,200,66,0.03); animation-delay:0.1s">
+        <div class="budget-range">$500–$700</div>
+        <div class="budget-pick"><span class="pick-brand am">AMD</span>⭐ RX 9070 XT</div>
+        <div class="budget-desc"><strong style="color:var(--gold)">Best overall 4K value.</strong> True 4K 60fps in most titles natively, 16GB GDDR6, FSR 4 upscaling support. Beats cards costing $300 more.</div>
+      </div>
+      <div class="budget-row" style="animation-delay:0.15s">
+        <div class="budget-range">$550–$660</div>
+        <div class="budget-pick"><span class="pick-brand nv">NVIDIA</span>RTX 5070</div>
+        <div class="budget-desc">Matches the 9070 XT in rasterization; DLSS 4 Multi-Frame Generation gives huge upscaled fps. Only 12GB VRAM is a concern long-term at 4K.</div>
+      </div>
+      <div class="budget-row" style="animation-delay:0.2s">
+        <div class="budget-range">$999–$1,100</div>
+        <div class="budget-pick"><span class="pick-brand nv">NVIDIA</span>RTX 5070 Ti</div>
+        <div class="budget-desc">Best NVIDIA value for 4K. Sits just above the 9070 XT in performance, adds better ray tracing and full DLSS 4 support. Premium over AMD is real but justified for NVIDIA ecosystem users.</div>
+      </div>
+      <div class="budget-row" style="animation-delay:0.25s">
+        <div class="budget-range">$1,350–$1,500</div>
+        <div class="budget-pick"><span class="pick-brand nv">NVIDIA</span>RTX 5080</div>
+        <div class="budget-desc">Genuine 4K 120Hz card. ~20% faster than the 5070 Ti. Best pick for high-refresh 4K gaming without paying RTX 5090 money.</div>
+      </div>
+      <div class="budget-row" style="animation-delay:0.3s">
+        <div class="budget-range">$3,500+</div>
+        <div class="budget-pick"><span class="pick-brand nv">NVIDIA</span>RTX 5090</div>
+        <div class="budget-desc">Absolute 4K king — no other card comes close. 4K 144Hz without compromise in any game. Terrible value; buy only if you truly need the best and budget is no concern.</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const gpus = [
+  // name, brand (nv/am), perf, priceMin, priceMax, bestValue, prevGen, ppd
+  { name: "RTX 5090",      full: "NVIDIA RTX 5090",      brand: "nv", perf: 175, pMin: 3500, pMax: 4200, bestValue: false, prevGen: false },
+  { name: "RTX 5080",      full: "NVIDIA RTX 5080",      brand: "nv", perf: 120, pMin: 1350, pMax: 1500, bestValue: false, prevGen: false },
+  { name: "RTX 5070 Ti",   full: "NVIDIA RTX 5070 Ti",   brand: "nv", perf: 106, pMin: 999,  pMax: 1100, bestValue: false, prevGen: false },
+  { name: "RX 9070 XT",    full: "AMD RX 9070 XT",       brand: "am", perf: 100, pMin: 600,  pMax: 700,  bestValue: true,  prevGen: false },
+  { name: "RX 9070",       full: "AMD RX 9070",           brand: "am", perf: 87,  pMin: 500,  pMax: 560,  bestValue: false, prevGen: false },
+  { name: "RTX 5070",      full: "NVIDIA RTX 5070",      brand: "nv", perf: 82,  pMin: 549,  pMax: 650,  bestValue: false, prevGen: false },
+  { name: "RX 7900 XTX",   full: "AMD RX 7900 XTX",      brand: "am", perf: 105, pMin: 700,  pMax: 850,  bestValue: false, prevGen: true  },
+  { name: "RX 7900 XT",    full: "AMD RX 7900 XT",       brand: "am", perf: 88,  pMin: 550,  pMax: 700,  bestValue: false, prevGen: true  },
+  { name: "RTX 5060 Ti 16G", full: "RTX 5060 Ti 16GB",  brand: "nv", perf: 68,  pMin: 450,  pMax: 550,  bestValue: false, prevGen: false },
+  { name: "RX 7800 XT",    full: "AMD RX 7800 XT",       brand: "am", perf: 62,  pMin: 350,  pMax: 420,  bestValue: false, prevGen: true  },
+  { name: "RTX 5060 Ti 8G", full: "RTX 5060 Ti 8GB",    brand: "nv", perf: 62,  pMin: 350,  pMax: 400,  bestValue: false, prevGen: false },
+  { name: "RTX 5060",      full: "NVIDIA RTX 5060",      brand: "nv", perf: 52,  pMin: 300,  pMax: 350,  bestValue: false, prevGen: false },
+  { name: "RX 7700 XT",    full: "AMD RX 7700 XT",       brand: "am", perf: 52,  pMin: 280,  pMax: 320,  bestValue: false, prevGen: true  },
+  { name: "RX 7600",       full: "AMD RX 7600",          brand: "am", perf: 38,  pMin: 200,  pMax: 240,  bestValue: false, prevGen: true  },
+];
+
+// Calculate PPD
+gpus.forEach(g => {
+  const mid = (g.pMin + g.pMax) / 2;
+  g.ppd = (g.perf / mid * 1000).toFixed(1);
+});
+
+const maxPerf = Math.max(...gpus.map(g => g.perf));
+
+// Bar chart
+const barChart = document.getElementById('barChart');
+gpus.forEach((g, i) => {
+  const widthPct = (g.perf / maxPerf) * 100;
+  const priceStr = `$${(g.pMin/1000).toFixed(1)}k–${(g.pMax/1000).toFixed(1)}k`;
+  const brandLabel = g.brand === 'nv' ? 'NVIDIA' : (g.prevGen ? 'AMD (prev-gen)' : 'AMD');
+
+  const row = document.createElement('div');
+  row.className = `bar-row${g.bestValue ? ' best-value' : ''}`;
+  row.style.animationDelay = `${i * 0.04}s`;
+
+  row.innerHTML = `
+    <div class="gpu-name">
+      <span class="brand ${g.brand}">${brandLabel}</span>
+      ${g.name}${g.bestValue ? '<span class="star">⭐</span>' : ''}
+    </div>
+    <div class="bar-track">
+      <div class="bar-fill ${g.brand}" style="width:${widthPct}%">
+        ${g.perf}
+      </div>
+    </div>
+    <div class="bar-price">${priceStr}</div>
+    <div class="bar-ppd" style="color:${parseFloat(g.ppd) > 150 ? '#76b900' : parseFloat(g.ppd) > 110 ? '#9ab870' : '#666680'}">${g.ppd}</div>
+  `;
+  barChart.appendChild(row);
+});
+
+// Ranking — sort by PPD, filter 4K-relevant (perf >= 60)
+const ranked = [...gpus]
+  .filter(g => g.perf >= 60)
+  .sort((a, b) => parseFloat(b.ppd) - parseFloat(a.ppd));
+
+const rankMeta = [
+  { tag: "Best 4K Value", caveat: null },
+  { tag: "Runner-up Value", caveat: null },
+  { tag: "Budget 4K", caveat: null },
+  { tag: "Strong Value", caveat: null },
+  { tag: "Good Value", caveat: null },
+  { tag: "Mid-Range", caveat: null },
+  { tag: "High Performance", caveat: null },
+  { tag: "Premium", caveat: null },
+  { tag: "Very High End", caveat: null },
+  { tag: "Extreme", caveat: null },
+];
+
+const rankGrid = document.getElementById('rankingGrid');
+const rankClass = ['gold-rank', 'silver-rank', 'bronze-rank'];
+ranked.forEach((g, i) => {
+  const card = document.createElement('div');
+  card.className = `rank-card${i < 3 ? ' ' + rankClass[i] : ''}`;
+  card.style.animationDelay = `${i * 0.05}s`;
+
+  const caveat = (g.perf < 70) ? '⚠ Limited 4K — better at 1440p' :
+                 (g.name.includes('8GB')) ? '⚠ 8GB VRAM limits 4K' :
+                 g.prevGen ? '🕰 Previous-gen; check current pricing' : null;
+
+  card.innerHTML = `
+    <div class="rank-number">${i + 1}</div>
+    <span class="rank-badge ${g.brand}">${g.brand === 'nv' ? 'NVIDIA' : 'AMD'}</span>
+    <div class="rank-model">${g.full}</div>
+    <div class="rank-score">${g.ppd}</div>
+    <div class="rank-score-label">PERF PER $1,000</div>
+    <span class="rank-tag">${rankMeta[i]?.tag || 'Competitive'}</span>
+    ${caveat ? `<div class="rank-caveat">${caveat}</div>` : ''}
+  `;
+  rankGrid.appendChild(card);
+});
+</script>
+</body>
+</html>
